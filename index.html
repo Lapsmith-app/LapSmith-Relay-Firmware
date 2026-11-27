@@ -1,0 +1,159 @@
+<!doctype html>
+<!--
+  The LapSmith Relay setup page: puts the relay on a new board by USB, from
+  the browser. scripts/flasher_site.py fills in the version and writes the
+  manifest beside it; .github/workflows/flasher.yml publishes it.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LapSmith Relay setup</title>
+  <meta name="description" content="Install the LapSmith Relay firmware on an M5Stack Atom Lite or AtomS3 Lite, from the browser.">
+  <!-- ESP Web Tools: esptool in the browser, served beside the page
+       (flasher_site.py checks it against npm's integrity). It picks the
+       image by the chip it finds (ESP32: Atom Lite, ESP32-S3: AtomS3 Lite). -->
+  <script>
+    // Chrome lists every serial port on the computer (Bluetooth ports, a
+    // plugged-in phone) and ESP Web Tools asks for any of them. Show only
+    // the USB serial an Atom can have: Espressif's own (AtomS3 Lite), WCH's
+    // (the Atom Lite's CH9102), FTDI's and Silicon Labs'. Runs before the
+    // module below, which is deferred.
+    if ("serial" in navigator) {
+      const request = navigator.serial.requestPort.bind(navigator.serial);
+      const ATOM_USB = [0x303a, 0x1a86, 0x0403, 0x10c4];
+      navigator.serial.requestPort = (options = {}) => request({
+        ...options,
+        filters: options.filters || ATOM_USB.map((usbVendorId) => ({ usbVendorId })),
+      });
+    }
+  </script>
+  <script type="module" src="esp-web-tools/install-button.js"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f5;
+      --card: #ffffff;
+      --text: #1d1d1f;
+      --muted: #5f6368;
+      --line: #e3e3df;
+      --accent: #d6361f;
+      --accent-text: #ffffff;
+      --warn-bg: #fff4e5;
+      --warn-line: #f0c27b;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #121214;
+        --card: #1c1c1f;
+        --text: #ececee;
+        --muted: #a1a1a8;
+        --line: #2e2e33;
+        --accent: #ff5a3c;
+        --accent-text: #121214;
+        --warn-bg: #2b2114;
+        --warn-line: #7a5523;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    main { max-width: 40rem; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+    h1 { font-size: 1.75rem; line-height: 1.2; margin: 0 0 .25rem; }
+    h2 { font-size: 1.05rem; margin: 2rem 0 .5rem; }
+    .version { color: var(--muted); margin: 0 0 1.5rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    ol, ul { padding-left: 1.3rem; margin: .5rem 0; }
+    li + li { margin-top: .4rem; }
+    .install { margin: 1.25rem 0 .25rem; }
+    .install button {
+      font: inherit;
+      font-weight: 600;
+      background: var(--accent);
+      color: var(--accent-text);
+      border: 0;
+      border-radius: 999px;
+      padding: .75rem 1.6rem;
+      cursor: pointer;
+    }
+    .install button:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+    .warning {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-line);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      margin-top: 1.5rem;
+    }
+    .muted { color: var(--muted); }
+    [slot="unsupported"], [slot="not-allowed"] { display: block; font-weight: 600; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>LapSmith Relay setup</h1>
+  <p class="version">Installs LapSmith Relay 0.1.4</p>
+
+  <div class="card">
+    <p>You need:</p>
+    <ul>
+      <li>an M5Stack <strong>AtomS3 Lite</strong> or <strong>Atom Lite</strong>,</li>
+      <li>a USB-C cable that carries data (not a charge-only one),</li>
+      <li>Chrome or Edge on a computer. An iPhone or iPad can't install it.
+        Chrome on an Android phone may work, but hasn't been tried yet.</li>
+    </ul>
+
+    <ol>
+      <li>Plug the Atom in.</li>
+      <li>Press <strong>Install</strong>. Chrome lists the Atom: an AtomS3 Lite
+        is called <strong>USB JTAG/serial debug unit</strong>. Pick it, press
+        <strong>Connect</strong>, then confirm. It takes about a minute. Keep
+        it plugged in until it says it's done.</li>
+      <li>Unplug it, then power it from the battery or any USB supply.</li>
+      <li>In the LapSmith app, open <strong>Settings › Bluetooth relays</strong>.
+        The first phone pairs with a new relay without pressing anything.</li>
+    </ol>
+
+    <div class="install">
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate">Install</button>
+        <span slot="unsupported">This browser can't reach USB devices. Use Chrome or Edge on a computer.</span>
+        <span slot="not-allowed">This page has to be opened over https to install.</span>
+      </esp-web-install-button>
+    </div>
+  </div>
+
+  <div class="warning">
+    <strong>This is for a new board.</strong> Installing erases the Atom, so a
+    relay that is already set up forgets every phone. To update a relay, use
+    the LapSmith app. If you do reinstall one, first forget
+    <strong>LapSmith Relay</strong> on each iPhone that used it (Settings ›
+    Bluetooth, ⓘ, Forget This Device), or it can't pair again.
+  </div>
+
+  <h2>If it won't connect</h2>
+  <ul>
+    <li>The list is empty: unplug the Atom and plug it in again, or try
+      another cable. Many USB-C cables only charge.</li>
+    <li>It fails straight after you pick the Atom: another program has it
+      open (Arduino IDE, M5Burner, a serial monitor). Close that program,
+      then press Install again.</li>
+    <li>It's in the list but the install fails: on an AtomS3 Lite, hold the
+      small reset button on its side (not the big button on top) for about
+      2 seconds, until the small green light comes on, then press Install
+      again. That puts it into download mode by hand.</li>
+  </ul>
+
+  <p class="muted">Every version: the
+    <a href="https://github.com/Lapsmith-app/LapSmith-Relay-Firmware/releases">LapSmith Relay releases</a>.</p>
+</main>
+</body>
+</html>
