@@ -6,7 +6,7 @@ phone can't.
 
 **Setting up a new relay?** Plug an M5Stack AtomS3 Lite or Atom Lite into a
 computer and install from the setup page, in Chrome or Edge:
-<https://lapsmith-app.github.io/LapSmith-Relay-Firmware/>. Then pair it in the
+<https://relay.lapsmith.app>. Then pair it in the
 LapSmith app, under Settings › Bluetooth relays.
 
 The firmware source is private. This repository only carries the release
